@@ -6,7 +6,13 @@ class SMTConfig(PretrainedConfig):
     def __init__(self, maxh=3508, maxw=2480, maxlen=1512, out_categories=2512, padding_token=0, 
                  in_channels=1, w2i={}, i2w={}, out_dir="out_smt", 
                  d_model=256, dim_ff=256, num_dec_layers=8, attn_heads=4,
-                 use_flash_attn=False, **kwargs):
+                 use_flash_attn=False, 
+                 # NEW: let users pass attn_implementation via config.json or kwargs
+                attn_implementation="eager", **kwargs):
+        
+        # IMPORTANT: initialize HF base config first
+        super().__init__(**kwargs)
+        
         self.architectures = ["SMT"]
         self.maxh = maxh
         self.maxw = maxw
@@ -22,3 +28,7 @@ class SMTConfig(PretrainedConfig):
         self.num_attn_heads = attn_heads
         self.num_dec_layers = num_dec_layers
         self.use_flash_attn = use_flash_attn
+        
+        # NEW: satisfy newer Transformers (>=4.38-ish)
+        # Valid values typically: "eager", "sdpa", "flash_attention_2" (if installed)
+        self._attn_implementation_internal = attn_implementation
