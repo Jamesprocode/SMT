@@ -67,3 +67,5 @@ def launch(config_path):
 
 if __name__ == "__main__":
     fire.Fire(launch)
+
+

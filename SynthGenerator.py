@@ -75,7 +75,7 @@ class VerovioGenerator():
 
         self.krn_format = krn_format
         self.title_generator = RandomSentence()
-        self.textures = [os.path.join("Generator/paper_textures", f) for f in os.listdir("Generator/paper_textures") if os.path.isfile(os.path.join("Generator/paper_textures", f))]
+        self.textures = []
 
 
     def load_beats(self, sources: list, split:str):
