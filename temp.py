@@ -28,3 +28,4 @@ predictions, _ = model.predict(x, convert_to_str=True)
 print("".join(predictions).replace('<b>', '\n').replace('<s>', ' ').replace('<t>', '\t'))
 # replace <model_reference> with the model you want to use, e.g. "SMT/smt-next-grandstaff"
 
+#ssh jwang3180@login-ice.pace.gatech.edu ssh to ICE
