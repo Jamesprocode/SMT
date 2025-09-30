@@ -29,3 +29,7 @@ print("".join(predictions).replace('<b>', '\n').replace('<s>', ' ').replace('<t>
 # replace <model_reference> with the model you want to use, e.g. "SMT/smt-next-grandstaff"
 
 #ssh jwang3180@login-ice.pace.gatech.edu ssh to ICE
+
+# activate conda environment
+# source /usr/local/pace-apps/manual/packages/anaconda3/2023.03/etc/profile.d/conda.sh
+# conda activate magick-env
