@@ -1,7 +1,18 @@
 import re
 import os
 import cv2
-
+import os, ctypes
+cp = os.environ.get("CONDA_PREFIX", "")
+if cp:
+    os.environ["PATH"] = f"{cp}/bin"
+    os.environ["MAGICK_HOME"] = cp
+    os.environ["MAGICK_CONFIGURE_PATH"] = f"{cp}/etc/ImageMagick-7"
+    os.environ["WAND_MAGICK_LIBRARY_PATH"] = f"{cp}/lib"
+    os.environ["WAND_MAGICK_LIBRARY_NAME"] = "MagickWand-7.Q16HDRI"
+    os.environ["LD_LIBRARY_PATH"] = f"{cp}/lib"           # only conda
+    ctypes.CDLL(f"{cp}/lib/libMagickCore-7.Q16HDRI.so")
+    ctypes.CDLL(f"{cp}/lib/libMagickWand-7.Q16HDRI.so")
+from wand.image import Image as IMG
 import verovio
 import random
 from datasets import load_dataset
