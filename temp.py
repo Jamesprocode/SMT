@@ -33,4 +33,9 @@ print("".join(predictions).replace('<b>', '\n').replace('<s>', ' ').replace('<t>
 # activate conda environment
 # source /usr/local/pace-apps/manual/packages/anaconda3/2023.03/etc/profile.d/conda.sh
 # conda activate magick-env
-# WANDB_DISABLED=true python fp-train-1.py --config_path config/FP-GrandStaff/pretraining.json
+# WANDB_DISABLED=true  python fp-train-1.py --config_path config/FP-GrandStaff/pretraining.json
+
+# 
+# checking GPU and requesting GPU resources
+# srun --mem=64G --gres=gpu:H200:1 --time=4:00:00 --pty bash
+# srun --mem=64G --gres=gpu:H200:1 --time=4:00:00 --pty bash

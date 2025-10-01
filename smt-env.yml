@@ -1,0 +1,73 @@
+name: smt-env
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+dependencies:
+  # == ESSENTIALS (Pinned) ==
+  # Pinning the core components of the environment.
+  - python=3.12
+  - pip
+  - pytorch=2.6.0
+  - torchvision=0.21.0
+  - torchaudio
+  - pytorch-cuda=12.1
+
+  # == KEY LIBRARIES (Flexible Versions) ==
+  # Letting conda find the latest compatible versions to avoid conflicts.
+  - lightning
+  - transformers
+  - tokenizers
+  - datasets
+  - pandas
+  - numpy
+  - scipy
+  - pyarrow
+  - safetensors
+  - triton         # <-- VERSION PIN REMOVED (CRITICAL FIX)
+  - wand           # <-- VERSION PIN REMOVED
+  - imagemagick
+  - py-opencv
+  - scikit-image
+  - cairosvg
+  - pillow
+  - imageio
+  - tifffile
+  - verovio        # <-- VERSION PIN REMOVED
+
+  # == UTILITIES (Flexible Versions) ==
+  - aiohttp
+  - attrs
+  - certifi
+  - cffi
+  - click
+  - dill
+  - filelock
+  - fire
+  - fsspec
+  - gitpython
+  - jinja2
+  - loguru
+  - markdown-it-py
+  - networkx
+  - packaging
+  - protobuf
+  - psutil
+  - pydantic
+  - pyyaml
+  - requests
+  - rich
+  - sentry-sdk
+  - six
+  - sympy
+  - tqdm
+  - xxhash
+
+  # == PIP-ONLY PACKAGES ==
+  # For packages that must come from PyPI.
+  - pip:
+    - huggingface-hub==0.29.1
+    - visualizer
+    - wandb
+    - names
+    - wonderwords
