@@ -2,61 +2,6 @@ import re
 import os
 import cv2
 
-
-# import os, ctypes
-
-# cp = os.environ.get("CONDA_PREFIX", "")
-# if cp:
-#     os.environ["PATH"] = f"{cp}/bin:{os.environ.get('PATH', '')}"
-#     os.environ["MAGICK_HOME"] = cp
-#     os.environ["LD_LIBRARY_PATH"] = f"{cp}/lib:{os.environ.get('LD_LIBRARY_PATH', '')}"
-    
-#     try:
-#         ctypes.CDLL(f"{cp}/lib/libMagickCore-7.Q16HDRI.so.10", mode=ctypes.RTLD_GLOBAL)
-#         ctypes.CDLL(f"{cp}/lib/libMagickWand-7.Q16HDRI.so.10", mode=ctypes.RTLD_GLOBAL)
-#     except:
-#         pass
-
-# from wand.image import Image as IMG
-
-
-
-# import os, ctypes
-
-# # Save original environment
-# original_env = {}
-# env_vars = ["PATH", "MAGICK_HOME", "MAGICK_CONFIGURE_PATH", 
-#             "WAND_MAGICK_LIBRARY_PATH", "WAND_MAGICK_LIBRARY_NAME", "LD_LIBRARY_PATH"]
-
-# cp = os.environ.get("CONDA_PREFIX", "")
-# if cp:
-#     # Save originals
-#     for var in env_vars:
-#         original_env[var] = os.environ.get(var, None)
-    
-#     # Set ImageMagick-specific vars
-#     os.environ["MAGICK_HOME"] = cp
-#     os.environ["MAGICK_CONFIGURE_PATH"] = f"{cp}/etc/ImageMagick-7"
-#     os.environ["WAND_MAGICK_LIBRARY_PATH"] = f"{cp}/lib"
-#     os.environ["WAND_MAGICK_LIBRARY_NAME"] = "MagickWand-7.Q16HDRI"
-    
-    # # Append to PATH and LD_LIBRARY_PATH instead of replacing
-    # os.environ["PATH"] = f"{cp}/bin:{os.environ.get('PATH', '')}"
-    # os.environ["LD_LIBRARY_PATH"] = f"{cp}/lib:{os.environ.get('LD_LIBRARY_PATH', '')}"
-    
-    # # Preload libraries
-    # try:
-    #     ctypes.CDLL(f"{cp}/lib/libjpeg.so")
-    # except:
-    #     pass
-    
-    # ctypes.CDLL(f"{cp}/lib/libMagickCore-7.Q16HDRI.so")
-    # ctypes.CDLL(f"{cp}/lib/libMagickWand-7.Q16HDRI.so")
-
-
-
-
-from wand.image import Image as IMG
 import verovio
 import random
 from datasets import load_dataset
