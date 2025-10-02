@@ -31,7 +31,7 @@ def main(config_path):
                                 in_channels=1, w2i=datamodule.train_set.w2i, i2w=datamodule.train_set.i2w,
                                 d_model=256, dim_ff=256, num_dec_layers=8)  # Instantiate LightningModule tuned to dataset stats
 
-    group = config.checkpoint.dirpath.split("/")[-1]  # Use checkpoint folder name to group W&B runs.
+    group = config.checkpoint.dirpath.split("/")[-1]  # Use checkpoint folder name to group W&B runs
     wandb_logger = WandbLogger(project='SMT-FP', group=group,
                                name="SMT-System-level", log_model=False)  # Configure Weights & Biases logging.
 
