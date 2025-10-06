@@ -1,73 +1,57 @@
-name: smt-env
+name: smt
 channels:
+  - conda-forge
   - pytorch
   - nvidia
-  - conda-forge
-dependencies:
-  # == ESSENTIALS (Pinned) ==
-  # Pinning the core components of the environment.
-  - python=3.12
-  - pip
-  - pytorch=2.6.0
-  - torchvision=0.21.0
-  - torchaudio
-  - pytorch-cuda=12.1
+channel_priority: strict
 
-  # == KEY LIBRARIES (Flexible Versions) ==
-  # Letting conda find the latest compatible versions to avoid conflicts.
+dependencies:
+  # --- Core ---
+  - python=3.10
+  - pip
+
+  # --- PyTorch (CUDA 12.1 stable set) ---
+  - pytorch=2.3.1
+  - torchvision=0.18.1
+  - torchaudio=2.3.1
+  - pytorch-cuda=12.1  # pulls the right CUDA runtime
+
+  # --- Imaging / OMR helpers ---
+  - imagemagick>=7
+  - cairo
+  - pango
+  - pkg-config
+  - opencv
+  - scikit-image
+  - pillow
+  - imageio
+  - tifffile
+
+  # --- ML / NLP stack ---
   - lightning
   - transformers
   - tokenizers
   - datasets
-  - pandas
   - numpy
+  - pandas
   - scipy
   - pyarrow
   - safetensors
-  - triton         # <-- VERSION PIN REMOVED (CRITICAL FIX)
-  - wand           # <-- VERSION PIN REMOVED
-  - imagemagick
-  - py-opencv
-  - scikit-image
-  - cairosvg
-  - pillow
-  - imageio
-  - tifffile
-  - verovio        # <-- VERSION PIN REMOVED
 
-  # == UTILITIES (Flexible Versions) ==
-  - aiohttp
-  - attrs
-  - certifi
-  - cffi
-  - click
-  - dill
-  - filelock
-  - fire
-  - fsspec
-  - gitpython
+  # --- Utils (keep essentials only; others come as deps) ---
   - jinja2
-  - loguru
-  - markdown-it-py
-  - networkx
-  - packaging
-  - protobuf
-  - psutil
-  - pydantic
-  - pyyaml
   - requests
   - rich
-  - sentry-sdk
-  - six
-  - sympy
   - tqdm
-  - xxhash
+  - psutil
+  - pyyaml
+  - gitpython
 
-  # == PIP-ONLY PACKAGES ==
-  # For packages that must come from PyPI.
+  # --- pip-only ---
   - pip:
-    - huggingface-hub==0.29.1
-    - visualizer
-    - wandb
-    - names
-    - wonderwords
+      - verovio           # PyPI wheel (Linux) → avoids conda resolution issues
+      - wand              # Python bindings for ImageMagick
+      - wandb
+      - visualizer
+      - names
+      - wonderwords
