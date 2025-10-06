@@ -14,8 +14,9 @@ from lightning import LightningDataModule
 from torch.utils.data import Dataset
 from SynthGenerator import VerovioGenerator
 
-# For single-system datasets
+# Single-system (music staff) preparation helpers
 def prepare_data(sample, reduce_ratio=1.0, fixed_size=None):
+    # HuggingFace stores PIL Images; convert to ndarray so we can resize with OpenCV.
     img = np.array(sample['image'])
 
     if fixed_size != None:
@@ -31,7 +32,7 @@ def prepare_data(sample, reduce_ratio=1.0, fixed_size=None):
     img = cv2.resize(img, (width, height))
 
     gt = sample['transcription'].strip("\n ")
-    gt = re.sub(r'(?<=\=)\d+', '', gt)
+    gt = re.sub(r'(?<=\=)\d+', '', gt)  # Remove measure counters so the vocab stays compact.
     gt = gt.replace(" ", " <s> ")
     gt = gt.replace("·", "")
     gt = gt.replace("\t", " <t> ")
@@ -43,17 +44,19 @@ def prepare_data(sample, reduce_ratio=1.0, fixed_size=None):
     return sample
 
 def load_set(dataset, split="train", reduce_ratio=1.0, fixed_size=None):
+    # Pull a split from HuggingFace and normalize every sample with prepare_data.
     ds = datasets.load_dataset(dataset, split=split, trust_remote_code=False)
     ds = ds.map(prepare_data, fn_kwargs={"reduce_ratio": reduce_ratio, "fixed_size": fixed_size}, num_proc=4, writer_batch_size=500)
 
     return ds
 
-# For full-page datasets
+# Full-page score preparation helpers
 def prepare_fp_data(
         sample,
         reduce_ratio: float = 1.0,
         krn_format: Literal["kern"] | Literal["ekern"] | Literal["bekern"] = "bekern",
         ):
+    # parse_kern rewrites **kern-like strings into whitespace-delimited tokens.
     sample["transcription"] = ['<bos>'] + parse_kern(sample["transcription"], krn_format=krn_format)[4:] + ['<eos>'] # Remove **kern, **ekern and **bekern header
 
     img = np.array(sample['image'].convert("RGB"))
@@ -72,6 +75,7 @@ def load_from_files_list(
         reduce_ratio: float = 0.5,
         map_kwargs: dict[str, any] = {"num_proc": 8}
         ):
+    # Dataset entries already contain rendered images; we only need to parse tokens and resize.
     dataset = datasets.load_dataset(file_ref, split=split, trust_remote_code=False)
     # dataset.cleanup_cache_files()
     dataset = dataset.map(
@@ -84,12 +88,13 @@ def load_from_files_list(
 
     return dataset
 
-# For all datasets
+# Shared batching utilities
 def batch_preparation_img2seq(data):
     images = [sample[0] for sample in data]
     dec_in = [sample[1] for sample in data]
     gt = [sample[2] for sample in data]
 
+    # Determine target canvas so all images in the batch can be stacked without cropping.
     max_image_width = max(128, max([img.shape[2] for img in images]))
     max_image_height = max(256, max([img.shape[1] for img in images]))
 
@@ -101,6 +106,7 @@ def batch_preparation_img2seq(data):
 
     max_length_seq = max([len(w) for w in gt])
 
+    # Align decoder input (no <eos>) and labels (no <bos>) to the same length.
     decoder_input = torch.zeros(size=[len(dec_in),max_length_seq-1]) # <eos> will be removed
     y = torch.zeros(size=[len(gt),max_length_seq-1]) # <bos> will be removed
 
@@ -128,6 +134,7 @@ class OMRIMG2SEQDataset(Dataset):
         self.y: Sequence
 
     def apply_teacher_forcing(self, sequence):
+        # Randomly corrupt tokens so the decoder learns to recover from mistakes during training.
         errored_sequence = sequence.clone()
         for token in range(1, len(sequence)):
             if np.random.rand() < self.teacher_forcing_error_rate and sequence[token] != self.padding_token:
@@ -194,6 +201,7 @@ class GrandStaffSingleSystem(OMRIMG2SEQDataset):
                 )
         self.reduce_ratio: float = reduce_ratio
 
+        # Lazily pull the desired split from HuggingFace; preprocessing happens in prepare_data.
         self.data = load_set(data_path, split, reduce_ratio=reduce_ratio)
 
     def get_width_avgs(self):
@@ -260,6 +268,7 @@ class GrandStaffFullPage(GrandStaffSingleSystem):
         self.reduce_ratio: float = reduce_ratio
         self.krn_format: str = krn_format
 
+        # Full pages need the kern parser (headers removed) rather than the lightweight single-system path.
         self.data = load_from_files_list(data_path, split, krn_format, reduce_ratio=reduce_ratio, map_kwargs={"writer_batch_size": 32})
 
 class SyntheticOMRDataset(OMRIMG2SEQDataset):
@@ -276,6 +285,7 @@ class SyntheticOMRDataset(OMRIMG2SEQDataset):
             krn_format: str = "bekern"
             ) -> None:
         super().__init__(teacher_forcing_error_rate, augment)
+        # VerovioGenerator renders pseudo-random scores on the fly so we never store synthetic images on disk.
         self.generator = VerovioGenerator(sources=data_path, split=split, krn_format=krn_format)
 
         self.num_sys_gen: int = number_of_systems
@@ -341,10 +351,12 @@ class CurriculumTrainingDataset(GrandStaffFullPage):
         self.curriculum_stage_beginning: int = 2 + self.skip_cl_steps
 
     def set_trainer_data(self, trainer):
+        # Lightning trainer injected after datamodule setup so curriculum can inspect global_step.
         self.trainer = trainer
 
     def linear_scheduler_synthetic(self, step):
         step += self.skip_cl_steps * self.increase_steps
+        # After curriculum phases, gradually bias sampling toward real pages for fine-tuning.
         return self.max_synth_prob + round((step - self.max_cl_steps) * (self.min_synth_prob - self.max_synth_prob) / self.finetune_steps, 4)
 
     def get_stage_calculator(self):
@@ -363,6 +375,7 @@ class CurriculumTrainingDataset(GrandStaffFullPage):
         gen_author_title = np.random.rand() > 0.5
 
         if stage < (self.num_cl_steps + self.curriculum_stage_beginning):
+           # Early curriculum: constrain synthetic pages to the current stage's system count.
            num_sys_to_gen = random.randint(1, stage)
            x, y = self.generator.generate_full_page_score(
                max_systems = num_sys_to_gen,
@@ -376,9 +389,11 @@ class CurriculumTrainingDataset(GrandStaffFullPage):
             # wandb.log({'Synthetic Probability': probability}, commit=False)
 
             if random.random() > probability:
+                # Sample a real score to finish fine-tuning on genuine layouts.
                 x = self.data[index]["image"]
                 y = self.data[index]["transcription"]
             else:
+                # Otherwise keep generating richer synthetic pages as regularization.
                 x, y = self.generator.generate_full_page_score(
                     max_systems = random.randint(3, 4),
                     strict_systems=False,
@@ -438,6 +453,7 @@ class GrandStaffDataset(LightningDataModule):
         self.val_set = GrandStaffSingleSystem(data_path=self.data_path, split="val",)
         self.test_set = GrandStaffSingleSystem(data_path=self.data_path, split="test",)
 
+        # Build a consistent vocab across splits so token ids align during training/validation/testing.
         w2i, i2w = check_and_retrieveVocabulary([self.train_set.get_gt(), self.val_set.get_gt(), self.test_set.get_gt()], "vocab/", f"{self.vocab_name}")
 
         self.train_set.set_dictionaries(w2i, i2w)
@@ -488,6 +504,7 @@ class SyntheticGrandStaffDataset(LightningDataModule):
         self.train_set: SyntheticOMRDataset = SyntheticOMRDataset(data_path=self.data_path, split="train", dataset_length=40000, augment=True, krn_format=self.krn_format)
         self.val_set: SyntheticOMRDataset = SyntheticOMRDataset(data_path=self.data_path, split="val", dataset_length=1000, augment=False, krn_format=self.krn_format)
         self.test_set: SyntheticOMRDataset = SyntheticOMRDataset(data_path=self.data_path, split="test", dataset_length=1000, augment=False, krn_format=self.krn_format)
+        # Synthetic samples still rely on a persisted vocab so downstream checkpoints remain compatible.
         w2i, i2w = check_and_retrieveVocabulary([self.train_set.get_gt(), self.val_set.get_gt(), self.test_set.get_gt()], "vocab/", f"{self.vocab_name}")#
 
         self.train_set.set_dictionaries(w2i, i2w)
@@ -527,6 +544,7 @@ class SyntheticCLGrandStaffDataset(LightningDataModule):
         self.train_set = GrandStaffFullPageCurriculumLearning(data_path=self.data_path, split="train", augment=True, krn_format=self.krn_format, reduce_ratio=config.reduce_ratio, skip_steps=skip_steps)
         self.val_set = GrandStaffFullPage(data_path=self.data_path, split="val", augment=False, krn_format=self.krn_format, reduce_ratio=config.reduce_ratio)
         self.test_set = GrandStaffFullPage(data_path=self.data_path, split="test", augment=False, krn_format=self.krn_format, reduce_ratio=config.reduce_ratio)
+        # Ensure curriculum stages and evaluation share token ids; vocab is derived jointly across splits.
         w2i, i2w = check_and_retrieveVocabulary([self.train_set.get_gt(), self.val_set.get_gt(), self.test_set.get_gt()], "vocab/", f"{self.vocab_name}")#
 
         self.train_set.set_dictionaries(w2i, i2w)
