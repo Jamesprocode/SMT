@@ -14,9 +14,10 @@ from lightning.pytorch.loggers import WandbLogger  # Stream metrics to Weights &
 from lightning.pytorch.callbacks.early_stopping import EarlyStopping  # Trigger early exit when metric stalls.
 
 torch.set_float32_matmul_precision('high')  # Improve stability for float16 autocast matmul operations.
-warnings.filterwarnings('ignore', message='.*spine.*is not terminated.*')  # Suppress kern terminator warnings
 
-# Suppress music21 warnings about kern terminators
+# Suppress dataset warnings
+warnings.filterwarnings('ignore', message='.*2 is not terminated by *-')  # Suppress kern terminator warnings
+warnings.filterwarnings('ignore', message='.*Inconsistent rhythm analysis.*')  # Suppress rhythm warnings
 os.environ['MUSIC21_WARNINGS'] = '0'
 
 
