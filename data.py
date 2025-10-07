@@ -107,14 +107,16 @@ def batch_preparation_img2seq(data):
     max_length_seq = max([len(w) for w in gt])
 
     # Align decoder input (no <eos>) and labels (no <bos>) to the same length.
-    decoder_input = torch.zeros(size=[len(dec_in),max_length_seq-1]) # <eos> will be removed
-    y = torch.zeros(size=[len(gt),max_length_seq-1]) # <bos> will be removed
+    decoder_input = torch.zeros(size=[len(dec_in), max_length_seq-1])  # <eos> will be removed
+    y = torch.zeros(size=[len(gt), max_length_seq-1])  # <bos> will be removed
 
     for i, seq in enumerate(dec_in):
-        decoder_input[i] = torch.from_numpy(np.asarray([char for char in seq[:-1]])) # all tokens but <eos>
+        tokens = np.asarray([char for char in seq[:-1]])  # all tokens but <eos>
+        decoder_input[i, :len(tokens)] = torch.from_numpy(tokens)
 
     for i, seq in enumerate(gt):
-        y[i] = torch.from_numpy(np.asarray([char for char in seq[1:]])) # all tokens but <bos>
+        tokens = np.asarray([char for char in seq[1:]])  # all tokens but <bos>
+        y[i, :len(tokens)] = torch.from_numpy(tokens)
 
     return X_train, decoder_input.long(), y.long()
 
