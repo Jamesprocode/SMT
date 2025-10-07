@@ -10,13 +10,7 @@ dependencies:
   - python=3.12
   - pip
 
-  # --- PyTorch (CUDA 12.1 for H100) ---
-  - pytorch=2.3.1
-  - torchvision=0.18.1
-  - torchaudio=2.3.1
-  - pytorch-cuda=12.1
-
-  # --- Imaging (removed imagemagick - using system version) ---
+  # --- Imaging ---
   - cairo
   - pango
   - pkg-config
@@ -24,7 +18,7 @@ dependencies:
   - pillow
   - scikit-image
   
-  # --- ML stack (grouped for faster resolution) ---
+  # --- ML stack ---
   - lightning
   - transformers
   - tokenizers
@@ -41,9 +35,12 @@ dependencies:
   - tqdm
   - pyyaml
   
-  # --- pip-only ---
+  # --- pip-only (includes PyTorch for ARM64+CUDA) ---
   - pip:
+      - torch==2.3.1
+      - torchvision==0.18.1
+      - torchaudio==2.3.1
       - verovio
-      - wand              # Uses system ImageMagick 7
+      - wand
       - wandb
-      - huggingface-hub   # Often faster via pip
+      - huggingface-hub
