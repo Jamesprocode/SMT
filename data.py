@@ -111,10 +111,12 @@ def batch_preparation_img2seq(data):
     y = torch.zeros(size=[len(gt),max_length_seq-1]) # <bos> will be removed
 
     for i, seq in enumerate(dec_in):
-        decoder_input[i] = torch.from_numpy(np.asarray([char for char in seq[:-1]])) # all tokens but <eos>
+        seq_array = torch.from_numpy(np.asarray([char for char in seq[:-1]])) # all tokens but <eos>
+        decoder_input[i, :len(seq_array)] = seq_array
 
     for i, seq in enumerate(gt):
-        y[i] = torch.from_numpy(np.asarray([char for char in seq[1:]])) # all tokens but <bos>
+        seq_array = torch.from_numpy(np.asarray([char for char in seq[1:]])) # all tokens but <bos>
+        y[i, :len(seq_array)] = seq_array
 
     return X_train, decoder_input.long(), y.long()
 
