@@ -399,41 +399,20 @@ class SMTModelForCausalLM(PreTrainedModel):
 
     @torch.no_grad
     def predict(self, input, convert_to_str=False, return_weights=False):
-        batch_size = input.size(0)
-        bos_token = torch.full((batch_size, 1), self.w2i['<bos>'], dtype=torch.long, device=input.device)
-        predicted_sequence = bos_token
+        predicted_sequence = torch.from_numpy(np.asarray([self.w2i['<bos>']])).to(input.device).unsqueeze(0)
         encoder_output = self.forward_encoder(input)
-
-        text_sequence = [[] for _ in range(batch_size)]
-        finished = torch.zeros(batch_size, dtype=torch.bool, device=input.device)
-
-        for _ in range(self.maxlen - predicted_sequence.shape[-1]):
+        text_sequence = []
+        for i in range(self.maxlen - predicted_sequence.shape[-1]):
             output = self.forward_decoder(encoder_output=encoder_output, last_predictions=predicted_sequence,
                                           return_weights=return_weights)
-            next_tokens = torch.argmax(output.logits[:, -1, :], dim=-1)
-            predicted_sequence = torch.cat([predicted_sequence, next_tokens.unsqueeze(1)], dim=1)
-
-            for idx, token in enumerate(next_tokens):
-                if finished[idx]:
-                    continue
-
-                token_id = token.item()
-                decoded_token = self.i2w[token_id]
-
-                if decoded_token == '<eos>':
-                    finished[idx] = True
-                    continue
-
-                if convert_to_str:
-                    decoded_token = str(decoded_token)
-
-                text_sequence[idx].append(decoded_token)
-
-            if torch.all(finished):
+            predicted_token = torch.argmax(output.logits[:, -1, :], dim=-1).item()
+            predicted_sequence = torch.cat([predicted_sequence, torch.argmax(output.logits[:, -1, :], dim=-1, keepdim=True)], dim=1)
+            if convert_to_str:
+                predicted_token = f"{predicted_token}"
+            if self.i2w[predicted_token] == '<eos>':
                 break
+            text_sequence.append(self.i2w[predicted_token])
 
-        if batch_size == 1:
-            return text_sequence[0], output
         return text_sequence, output
 
 
