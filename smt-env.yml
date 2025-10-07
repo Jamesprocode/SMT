@@ -7,27 +7,24 @@ channel_priority: strict
 
 dependencies:
   # --- Core ---
-  - python=3.10
+  - python=3.12
   - pip
 
-  # --- PyTorch (CUDA 12.1 stable set) ---
+  # --- PyTorch (CUDA 12.1 for H100) ---
   - pytorch=2.3.1
   - torchvision=0.18.1
   - torchaudio=2.3.1
-  - pytorch-cuda=12.1  # pulls the right CUDA runtime
+  - pytorch-cuda=12.1
 
-  # --- Imaging / OMR helpers ---
-  - imagemagick>=7
+  # --- Imaging (removed imagemagick - using system version) ---
   - cairo
   - pango
   - pkg-config
   - opencv
-  - scikit-image
   - pillow
-  - imageio
-  - tifffile
-
-  # --- ML / NLP stack ---
+  - scikit-image
+  
+  # --- ML stack (grouped for faster resolution) ---
   - lightning
   - transformers
   - tokenizers
@@ -38,20 +35,15 @@ dependencies:
   - pyarrow
   - safetensors
 
-  # --- Utils (keep essentials only; others come as deps) ---
+  # --- Utils ---
   - jinja2
   - requests
-  - rich
   - tqdm
-  - psutil
   - pyyaml
-  - gitpython
-
+  
   # --- pip-only ---
   - pip:
-      - verovio           # PyPI wheel (Linux) → avoids conda resolution issues
-      - wand              # Python bindings for ImageMagick
+      - verovio
+      - wand              # Uses system ImageMagick 7
       - wandb
-      - visualizer
-      - names
-      - wonderwords
+      - huggingface-hub   # Often faster via pip
