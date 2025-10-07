@@ -53,7 +53,8 @@ class SMT_Trainer(L.LightningModule):
 
         stage = self.stage_calculator(self.global_step)
 
-        self.log('loss', loss, on_epoch=True, batch_size=1, prog_bar=True)
+        batch_size = x.size(0)
+        self.log('loss', loss, on_epoch=True, batch_size=batch_size, prog_bar=True)
         self.log("stage", stage, on_epoch=True, prog_bar=True)
 
         return loss
@@ -61,20 +62,32 @@ class SMT_Trainer(L.LightningModule):
 
     def validation_step(self, val_batch):
         x, _, y = val_batch
-        predicted_sequence, _ = self.model.predict(input=x)
 
-        dec = "".join(predicted_sequence)
-        dec = dec.replace("<t>", "\t")
-        dec = dec.replace("<b>", "\n")
-        dec = dec.replace("<s>", " ")
+        # Process each item in the batch
+        batch_size = x.size(0)
+        for i in range(batch_size):
+            # Get prediction for single item
+            predicted_sequence, _ = self.model.predict(input=x[i:i+1])
 
-        gt = "".join([self.model.i2w[token.item()] for token in y.squeeze(0)[:-1]]) # Remove <eos>
-        gt = gt.replace("<t>", "\t")
-        gt = gt.replace("<b>", "\n")
-        gt = gt.replace("<s>", " ")
+            dec = "".join(predicted_sequence)
+            dec = dec.replace("<t>", "\t")
+            dec = dec.replace("<b>", "\n")
+            dec = dec.replace("<s>", " ")
 
-        self.preds.append(dec)
-        self.grtrs.append(gt)
+            # Get ground truth for single item, filtering out padding tokens
+            gt_tokens = y[i]
+            # Remove padding tokens (assuming padding_token is 0 or self.padding_token)
+            gt_tokens = gt_tokens[gt_tokens != self.padding_token]
+            gt = "".join([self.model.i2w[token.item()] for token in gt_tokens if token.item() in self.model.i2w])
+            # Remove <eos> if present
+            if gt.endswith("<eos>"):
+                gt = gt[:-5]
+            gt = gt.replace("<t>", "\t")
+            gt = gt.replace("<b>", "\n")
+            gt = gt.replace("<s>", " ")
+
+            self.preds.append(dec)
+            self.grtrs.append(gt)
 
     def on_validation_epoch_end(self, metric_name="val") -> None:
         cer, ser, ler = compute_poliphony_metrics(self.preds, self.grtrs)
