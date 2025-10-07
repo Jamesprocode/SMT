@@ -19,40 +19,6 @@ import names
 from wonderwords import RandomSentence
 # from utils import clean_kern#, parse_kern
 
-def fix_kern_terminators(krn: str) -> str:
-    """Ensure all spines are properly terminated with *-"""
-    lines = krn.strip().split('\n')
-    if not lines:
-        return krn
-
-    # Find number of spines from first data line
-    num_spines = None
-    for line in lines:
-        if line.strip() and not line.startswith('!!!'):
-            num_spines = len(line.split('\t'))
-            break
-
-    if num_spines is None:
-        return krn
-
-    # Check last line
-    last_line = lines[-1].strip()
-    expected_terminator = '\t'.join(['*-'] * num_spines)
-
-    if last_line == expected_terminator:
-        return krn
-    elif '*-' in last_line:
-        # Fix incomplete terminators
-        terminators = last_line.split('\t')
-        while len(terminators) < num_spines:
-            terminators.append('*-')
-        lines[-1] = '\t'.join(terminators[:num_spines])
-    else:
-        # Add missing terminator line
-        lines.append(expected_terminator)
-
-    return '\n'.join(lines)
-
 def clean_kern(krn, avoid_tokens=['*Xped', '*staff1', '*staff2', '*tremolo', '*ped', '*Xtuplet', '*tuplet', "*Xtremolo", '*cue', '*Xcue', '*rscale:1/2', '*rscale:1', '*kcancel', '*below']):
     krn = krn.split('\n')
     newkrn = []
@@ -63,9 +29,7 @@ def clean_kern(krn, avoid_tokens=['*Xped', '*staff1', '*staff2', '*tremolo', '*p
             if not all([token == '*' for token in line.split('\t')]):
                 newkrn.append(line.replace("\n", ""))
 
-    result = "\n".join(newkrn)
-    # Fix terminators before returning
-    return fix_kern_terminators(result)
+    return "\n".join(newkrn)
 
 def parse_kern(krn: str) -> str:
     krn = clean_kern(krn)

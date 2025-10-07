@@ -75,40 +75,6 @@ def save_kern_output(output_path, array):
         with open(f"{output_path}/{idx}.krn", "w") as bfilewrite:
             bfilewrite.write(transcription)
 
-def fix_kern_terminators(krn: str) -> str:
-    """Ensure all spines are properly terminated with *-"""
-    lines = krn.strip().split('\n')
-    if not lines:
-        return krn
-
-    # Find number of spines from first data line
-    num_spines = None
-    for line in lines:
-        if line.strip() and not line.startswith('!!!'):
-            num_spines = len(line.split('\t'))
-            break
-
-    if num_spines is None:
-        return krn
-
-    # Check last line
-    last_line = lines[-1].strip()
-    expected_terminator = '\t'.join(['*-'] * num_spines)
-
-    if last_line == expected_terminator:
-        return krn
-    elif '*-' in last_line:
-        # Fix incomplete terminators
-        terminators = last_line.split('\t')
-        while len(terminators) < num_spines:
-            terminators.append('*-')
-        lines[-1] = '\t'.join(terminators[:num_spines])
-    else:
-        # Add missing terminator line
-        lines.append(expected_terminator)
-
-    return '\n'.join(lines)
-
 def clean_kern(
         krn: str,
         forbidden_tokens: list[str] = ["*staff2", "*staff1", "*Xped", "*tremolo", "*ped", "*Xtuplet", "*tuplet", "*Xtremolo", "*cue", "*Xcue", "*rscale:1/2", "*rscale:1", "*kcancel", "*below"]
@@ -116,8 +82,7 @@ def clean_kern(
     forbidden_pattern = "(" + "|".join([t.replace("*", "\\*") for t in forbidden_tokens]) + ")"
     krn = re.sub(f".*{forbidden_pattern}.*\n", "", krn) # Remove lines containing any of the forbidden tokens
     krn = re.sub("(^|(?<=\n))\*(\s\*)*(\n|$)", "", krn) # Remove lines that only contain "*" tokens
-    # Fix terminators before returning
-    return fix_kern_terminators(krn.strip())
+    return krn.strip()
 
 def parse_kern(
         krn: str,
