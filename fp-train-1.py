@@ -1,6 +1,7 @@
 import fire  # Expose a simple CLI interface using Python Fire.
 import json  # Handle JSON config serialization.
 import torch  # Core PyTorch API used by Lightning under the hood.
+import warnings  # Suppress unwanted warnings from music21
 from data import SyntheticGrandStaffDataset  # Lightning DataModule for synthetic grand staff samples.
 from smt_trainer import SMT_Trainer  # LightningModule wrapper around the SMT model.
 
@@ -11,6 +12,7 @@ from lightning.pytorch.loggers import WandbLogger  # Stream metrics to Weights &
 from lightning.pytorch.callbacks.early_stopping import EarlyStopping  # Trigger early exit when metric stalls.
 
 torch.set_float32_matmul_precision('high')  # Improve stability for float16 autocast matmul operations.
+warnings.filterwarnings('ignore', message='.*spine.*is not terminated.*')  # Suppress kern terminator warnings
 
 
 def main(config_path):
