@@ -33,15 +33,19 @@ predictions, _ = model.predict(x, convert_to_str=True)
 # activate conda environment
 # source /usr/local/pace-apps/manual/packages/anaconda3/2023.03/etc/profile.d/conda.sh
 # conda activate magick-env
-# WANDB_DISABLED=true  python fp-train-1.py --config_path config/FP-GrandStaff/pretraining.json
+# WANDB_DISABLED=true  python fp-train-1.py --config_path config/GrandStaff/grandstaff.json
 
 # 
 # checking GPU and requesting GPU resources
 # srun --mem=64G --gres=gpu:H200:1 --time=4:00:00 --pty bash
 # srun --mem=64G --gres=gpu:H200:1 --time=4:00:00 --pty bash
 
+
+
 dataset = datasets.load_dataset("PRAIG/fp-grandstaff")
 sample = dataset['test'][0]
 print("GT format:", repr(sample['transcription'][:200]))
 print("\nContains <b>?", '<b>' in sample['transcription'])
 print("Contains \\n?", '\n' in sample['transcription'])
+
+# scp -i ~/.ssh/lambda-key.pem ubuntu@192.222.58.136:/lambda/nfs/SMTTraining/SMT/requirements.txt ~/Downloads/
