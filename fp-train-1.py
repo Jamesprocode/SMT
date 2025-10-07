@@ -16,7 +16,7 @@ from lightning.pytorch.callbacks.early_stopping import EarlyStopping  # Trigger 
 torch.set_float32_matmul_precision('high')  # Improve stability for float16 autocast matmul operations.
 
 # Suppress dataset warnings
-warnings.filterwarnings('ignore', message='.*2 is not terminated by *-')  # Suppress kern terminator warnings
+warnings.filterwarnings('ignore', message='.!!WARNING: spine 2 is not terminated by *-')  # Suppress kern terminator warnings
 warnings.filterwarnings('ignore', message='.*Inconsistent rhythm analysis.*')  # Suppress rhythm warnings
 os.environ['MUSIC21_WARNINGS'] = '0'
 
