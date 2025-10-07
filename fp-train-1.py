@@ -49,7 +49,8 @@ def main(config_path):
                       check_val_every_n_epoch=5,
                       logger=wandb_logger,
                       callbacks=[checkpointer, early_stopping],
-                      precision='16-mixed')  # Configure Lightning trainer with callbacks and mixed precision
+                      precision='16-mixed',
+                      num_sanity_val_steps=0)  # Skip sanity validation to avoid slow autoregressive predict during startup
 
     trainer.fit(model_wrapper, datamodule=datamodule)  # Start the training loop against the datamodule.
 
