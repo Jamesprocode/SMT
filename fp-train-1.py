@@ -3,7 +3,6 @@ import json  # Handle JSON config serialization.
 import torch  # Core PyTorch API used by Lightning under the hood.
 import warnings  # Suppress unwanted warnings from music21
 import os  # Redirect stderr to suppress C library warnings
-import sys  # System-level operations
 from data import SyntheticGrandStaffDataset  # Lightning DataModule for synthetic grand staff samples.
 from smt_trainer import SMT_Trainer  # LightningModule wrapper around the SMT model.
 
@@ -58,7 +57,7 @@ def main(config_path):
                       logger=wandb_logger,
                       callbacks=[checkpointer, early_stopping],
                       precision='16-mixed',
-                      num_sanity_val_steps=0)  # Skip sanity validation to avoid slow autoregressive predict during startup
+                      num_sanity_val_steps=2)  # Run 2 sanity validation steps to verify setup
 
     trainer.fit(model_wrapper, datamodule=datamodule)  # Start the training loop against the datamodule.
 
