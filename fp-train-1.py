@@ -58,7 +58,8 @@ def main(config_path):
                       callbacks=[checkpointer, early_stopping],
                       precision='16-mixed',
                       num_sanity_val_steps=1,  # Run 2 sanity validation steps to verify setup
-                      limit_val_batches=0.2)  # Validate on 10% of validation set
+                      limit_val_batches=0.2,
+                      ckpt_path="weights/GrandStaff/GrandStaff.ckpt")  # Validate on 10% of validation set
 
     trainer.fit(model_wrapper, datamodule=datamodule)  # Start the training loop against the datamodule.
 
