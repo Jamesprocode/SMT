@@ -53,11 +53,12 @@ def main(config_path):
                                    verbose=config.checkpoint.verbose)  # Persist best checkpoints per config criteria.
 
     trainer = Trainer(max_epochs=10000,
-                      check_val_every_n_epoch=5,
+                      check_val_every_n_epoch=10,  # Validate every 10 epochs to reduce overhead.
                       logger=wandb_logger,
                       callbacks=[checkpointer, early_stopping],
                       precision='16-mixed',
-                      num_sanity_val_steps=2)  # Run 2 sanity validation steps to verify setup
+                      num_sanity_val_steps=1,  # Run 2 sanity validation steps to verify setup
+                      limit_val_batches=0.2)  # Validate on 10% of validation set
 
     trainer.fit(model_wrapper, datamodule=datamodule)  # Start the training loop against the datamodule.
 

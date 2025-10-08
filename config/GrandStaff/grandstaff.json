@@ -1,10 +1,10 @@
 {
     "data":{
       "data_path": "PRAIG/grandstaff",
-      "batch_size": 32,
+      "batch_size": 128,
       "vocab_name": "GrandStaff",
       "img_format": ".jpg",
-      "num_workers": 20,
+      "num_workers": 64,
       "reduce_ratio": 1.0
     },
 	"checkpoint": {

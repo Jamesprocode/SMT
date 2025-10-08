@@ -63,18 +63,18 @@ class SMT_Trainer(L.LightningModule):
     def validation_step(self, val_batch):
         x, _, y = val_batch
 
-        # Process only first sample in batch to maintain original speed
+        # Validation uses batch_size=1, so we process the single sample
         # Autoregressive prediction is slow (up to maxlen=4360 steps per sample)
-        i = 0
-        predicted_sequence, _ = self.model.predict(input=x[i:i+1])
+        # We limit validation to 10% of dataset via limit_val_batches
+        predicted_sequence, _ = self.model.predict(input=x)
 
         dec = "".join(predicted_sequence)
         dec = dec.replace("<t>", "\t")
         dec = dec.replace("<b>", "\n")
         dec = dec.replace("<s>", " ")
 
-        # Get ground truth for first sample, filtering out padding tokens
-        gt_tokens = y[i]
+        # Get ground truth, filtering out padding tokens
+        gt_tokens = y.squeeze(0)  # Remove batch dimension
         gt_tokens = gt_tokens[gt_tokens != self.padding_token]
         gt = "".join([self.model.i2w[token.item()] for token in gt_tokens if token.item() in self.model.i2w])
         # Remove <eos> if present

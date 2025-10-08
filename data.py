@@ -487,10 +487,11 @@ class GrandStaffDataset(LightningDataModule):
         return torch.utils.data.DataLoader(self.train_set, batch_size=self.batch_size, num_workers=self.num_workers, shuffle=True, collate_fn=batch_preparation_img2seq)
 
     def val_dataloader(self):
-        return torch.utils.data.DataLoader(self.val_set, batch_size=self.batch_size, num_workers=self.num_workers, collate_fn=batch_preparation_img2seq)
+        # Use batch_size=1 for validation to avoid slow autoregressive prediction on large batches
+        return torch.utils.data.DataLoader(self.val_set, batch_size=1, num_workers=self.num_workers, collate_fn=batch_preparation_img2seq)
 
     def test_dataloader(self):
-        return torch.utils.data.DataLoader(self.test_set, batch_size=self.batch_size, num_workers=self.num_workers, collate_fn=batch_preparation_img2seq)
+        return torch.utils.data.DataLoader(self.test_set, batch_size=1, num_workers=self.num_workers, collate_fn=batch_preparation_img2seq)
 
 # Synthetic system-level GrandStaff training
 # NOTE: Pre-train the SMT on system-level data using this dataset
@@ -526,10 +527,11 @@ class SyntheticGrandStaffDataset(LightningDataModule):
         return torch.utils.data.DataLoader(self.train_set, batch_size=self.batch_size, num_workers=self.num_workers, shuffle=True, collate_fn=batch_preparation_img2seq)
 
     def val_dataloader(self):
-        return torch.utils.data.DataLoader(self.val_set, batch_size=self.batch_size, num_workers=self.num_workers, collate_fn=batch_preparation_img2seq)
+        # Use batch_size=1 for validation to avoid slow autoregressive prediction on large batches
+        return torch.utils.data.DataLoader(self.val_set, batch_size=1, num_workers=self.num_workers, collate_fn=batch_preparation_img2seq)
 
     def test_dataloader(self):
-        return torch.utils.data.DataLoader(self.test_set, batch_size=self.batch_size, num_workers=self.num_workers, collate_fn=batch_preparation_img2seq)
+        return torch.utils.data.DataLoader(self.test_set, batch_size=1, num_workers=self.num_workers, collate_fn=batch_preparation_img2seq)
 
 # Synthetic system-to-full-page GrandStaff curriculum training
 # NOTE: Fine-tune the SMT on page-level data with curriculum learning
