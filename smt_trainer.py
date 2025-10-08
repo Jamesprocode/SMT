@@ -63,32 +63,29 @@ class SMT_Trainer(L.LightningModule):
     def validation_step(self, val_batch):
         x, _, y = val_batch
 
-        # Process first 3 samples in batch (or all if batch < 3)
+        # Process only first sample in batch to maintain original speed
         # Autoregressive prediction is slow (up to maxlen=4360 steps per sample)
-        batch_size = x.size(0)
-        num_samples_to_validate = min(3, batch_size)
+        i = 0
+        predicted_sequence, _ = self.model.predict(input=x[i:i+1])
 
-        for i in range(num_samples_to_validate):
-            predicted_sequence, _ = self.model.predict(input=x[i:i+1])
+        dec = "".join(predicted_sequence)
+        dec = dec.replace("<t>", "\t")
+        dec = dec.replace("<b>", "\n")
+        dec = dec.replace("<s>", " ")
 
-            dec = "".join(predicted_sequence)
-            dec = dec.replace("<t>", "\t")
-            dec = dec.replace("<b>", "\n")
-            dec = dec.replace("<s>", " ")
+        # Get ground truth for first sample, filtering out padding tokens
+        gt_tokens = y[i]
+        gt_tokens = gt_tokens[gt_tokens != self.padding_token]
+        gt = "".join([self.model.i2w[token.item()] for token in gt_tokens if token.item() in self.model.i2w])
+        # Remove <eos> if present
+        if gt.endswith("<eos>"):
+            gt = gt[:-5]
+        gt = gt.replace("<t>", "\t")
+        gt = gt.replace("<b>", "\n")
+        gt = gt.replace("<s>", " ")
 
-            # Get ground truth for sample, filtering out padding tokens
-            gt_tokens = y[i]
-            gt_tokens = gt_tokens[gt_tokens != self.padding_token]
-            gt = "".join([self.model.i2w[token.item()] for token in gt_tokens if token.item() in self.model.i2w])
-            # Remove <eos> if present
-            if gt.endswith("<eos>"):
-                gt = gt[:-5]
-            gt = gt.replace("<t>", "\t")
-            gt = gt.replace("<b>", "\n")
-            gt = gt.replace("<s>", " ")
-
-            self.preds.append(dec)
-            self.grtrs.append(gt)
+        self.preds.append(dec)
+        self.grtrs.append(gt)
 
     def on_validation_epoch_end(self, metric_name="val") -> None:
         cer, ser, ler = compute_poliphony_metrics(self.preds, self.grtrs)
