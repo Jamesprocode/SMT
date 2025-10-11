@@ -61,7 +61,7 @@ def main(config_path):
                       limit_val_batches=0.2  # Use 20% of validation set for quicker validation passes
                       )  # Validate on 10% of validation set
 
-    trainer.fit(model_wrapper, datamodule=datamodule, ckpt_path="weights/GrandStaff/GrandStaff-v1.ckpt")  # Start the training loop against the datamodule.
+    trainer.fit(model_wrapper, datamodule=datamodule)  # Start the training loop against the datamodule.
 
     model = SMT_Trainer.load_from_checkpoint(checkpointer.best_model_path)  # Reload the best checkpoint for testing.
 

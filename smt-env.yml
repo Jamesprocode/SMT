@@ -44,3 +44,4 @@ dependencies:
       - wand
       - wandb
       - huggingface-hub
+      - fire 

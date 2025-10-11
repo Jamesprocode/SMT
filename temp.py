@@ -49,3 +49,5 @@ print("\nContains <b>?", '<b>' in sample['transcription'])
 print("Contains \\n?", '\n' in sample['transcription'])
 
 # scp -i ~/.ssh/lambda-key.pem ubuntu@192.222.58.136:/lambda/nfs/SMTTraining/SMT/requirements.txt ~/Downloads/
+# ssh -i ~/.ssh/lambda-key.pem ubuntu@192.222.58.136
+# go back to batch if the data the model blew up
