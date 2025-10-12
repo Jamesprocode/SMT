@@ -31,15 +31,18 @@ predictions, _ = model.predict(x, convert_to_str=True)
 #ssh jwang3180@login-ice.pace.gatech.edu ssh to ICE
 
 # activate conda environment
-# source /usr/local/pace-apps/manual/packages/anaconda3/2023.03/etc/profile.d/conda.sh
-# conda activate magick-env
-# WANDB_DISABLED=true  python fp-train-1.py --config_path config/GrandStaff/grandstaff.json
+source /usr/local/pace-apps/manual/packages/anaconda3/2023.03/etc/profile.d/conda.sh
+conda activate smt-env
+# WANDB_DISABLED=true  python fp-train-1.py --config_path config/FP-GrandStaff/pretraining.json
+
+# python fp-train-1.py --config_path config/FP-GrandStaff/pretraining.json
+
 
 # 
 # checking GPU and requesting GPU resources
 # srun --mem=64G --gres=gpu:H200:1 --time=4:00:00 --pty bash
-# srun --mem=64G --gres=gpu:H200:1 --time=4:00:00 --pty bash
-
+# srun --mem=64G --gres=gpu:H200:8 --time=4:00:00 --pty bash
+# srun --mem=1900G --gres=gpu:H200:8 --cpus-per-task=64 --time=4:00:00 --pty bash
 
 
 dataset = datasets.load_dataset("PRAIG/fp-grandstaff")
@@ -51,3 +54,12 @@ print("Contains \\n?", '\n' in sample['transcription'])
 # scp -i ~/.ssh/lambda-key.pem ubuntu@192.222.58.136:/lambda/nfs/SMTTraining/SMT/requirements.txt ~/Downloads/
 # ssh -i ~/.ssh/lambda-key.pem ubuntu@192.222.58.136
 # go back to batch if the data the model blew up
+
+srun -p ice-gpu --gres=gpu:h100:1 --mem=96G --cpus-per-task=16 --time=4:00:00 --pty bash
+srun -p ice-gpu --gres=gpu:1 \
+  --cpus-per-task=32 --mem=64G \
+  --time=08:00:00 --pty bash
+scontrol show job 3310074 | grep -E "StartTime|Priority|Reason|SchedNodeList"
+slurm_load_jobs error: Invalid job id specified
+srun -p ice-gpu --gres=gpu:h200:2 --cpus-per-task=40 --mem=128G \
+     --time=08:00:00 --pty bash

@@ -35,8 +35,42 @@ class SMT_Trainer(L.LightningModule):
 
 
     def configure_optimizers(self):
-        return torch.optim.Adam(list(self.model.encoder.parameters()) + list(self.model.decoder.parameters()), lr=1e-4, amsgrad=False)
+        optimizer = torch.optim.Adam(
+            list(self.model.encoder.parameters()) + list(self.model.decoder.parameters()),
+            lr=1e-3,  # Scaled from 1e-4 for batch size 128 (10x scaling)
+            amsgrad=False
+        )
 
+        # Warmup scheduler: gradually increase LR from 1e-5 to 1e-3 over 1000 steps
+        warmup_scheduler = torch.optim.lr_scheduler.LinearLR(
+            optimizer,
+            start_factor=0.1,  # Start at 1% of target LR (1e-4)
+            end_factor=1.0,     # End at 100% of target LR (1e-3)
+            total_iters=3000    # Warmup duration: 1000 steps
+        )
+
+        # Cosine annealing after warmup for gradual decay
+        cosine_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+            optimizer,
+            T_max=100000,  # Total training steps for decay
+            eta_min=1e-5   # Minimum LR at end of training
+        )
+
+        # Chain warmup then cosine decay
+        scheduler = torch.optim.lr_scheduler.SequentialLR(
+            optimizer,
+            schedulers=[warmup_scheduler, cosine_scheduler],
+            milestones=[1000]  # Switch from warmup to cosine at step 1000
+        )
+
+        return {
+            "optimizer": optimizer,
+            "lr_scheduler": {
+                "scheduler": scheduler,
+                "interval": "step",  # Update LR every step
+                "frequency": 1
+            }
+        }
     def set_stage(self, stage):
         self.stage = stage
 

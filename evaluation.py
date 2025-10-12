@@ -79,3 +79,17 @@ if len(predictions) > 0:
     print("\nGround Truth:", ground_truths[0][:200])
 else:
     print("No successful predictions")
+    
+    
+    # python evaluateion_kern.py --dataset_name "PRAIG/camera-grandstaff" --num_samples 100
+    
+    
+    #not name myself just name the project
+    #publication not in the top distinguish small project and big project
+    # opening paragraph about myself especcially for career fair
+    
+    
+#     CER: 945.11%
+# SER: 1199.04%
+# LER: 1328.12%
+

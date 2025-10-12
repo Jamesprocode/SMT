@@ -1,8 +1,10 @@
 # Core ML frameworks (torch from system - has CUDA)
 lightning==2.5.0.post0
-pytorch-lightning==2.5.0.post0
 transformers==4.49.0
 datasets==3.3.2
+torch==2.6.0
+torchvision==0.21.0
+torchaudio==2.6.0
 
 # HuggingFace ecosystem
 huggingface-hub==0.29.1

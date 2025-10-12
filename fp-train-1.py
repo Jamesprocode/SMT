@@ -11,6 +11,7 @@ from lightning.pytorch import Trainer  # Orchestrate training and evaluation loo
 from lightning.pytorch.callbacks import ModelCheckpoint  # Save checkpoints driven by monitored metrics.
 from lightning.pytorch.loggers import WandbLogger  # Stream metrics to Weights & Biases.
 from lightning.pytorch.callbacks.early_stopping import EarlyStopping  # Trigger early exit when metric stalls.
+from lightning.pytorch.strategies import DDPStrategy  # Distributed Data Parallel strategy.
 
 torch.set_float32_matmul_precision('high')  # Improve stability for float16 autocast matmul operations.
 
@@ -40,7 +41,7 @@ def main(config_path):
 
     group = config.checkpoint.dirpath.split("/")[-1]  # Use checkpoint folder name to group W&B runs.
     wandb_logger = WandbLogger(project='SMT-FP', group=group,
-                               name="SMT-System-level", log_model=False)  # Configure Weights & Biases logging.
+                               name="SMT-System-level", log_model=True)  # Configure Weights & Biases logging.
 
     early_stopping = EarlyStopping(monitor="val_SER", min_delta=0.01,
                                    patience=5, mode="min", verbose=True)  # Stop if SER does not improve soon enough.
@@ -52,16 +53,32 @@ def main(config_path):
                                    save_top_k=config.checkpoint.save_top_k,
                                    verbose=config.checkpoint.verbose)  # Persist best checkpoints per config criteria.
 
+        # Optimal strategy for 4x H200 GPU cluster
+    # DDPStrategy with static_graph=True for better performance when model architecture is fixed
+    strategy = DDPStrategy(
+        find_unused_parameters=True,  # Handle any unused parameters in backward pass
+        static_graph=False,  # Set to True if model architecture never changes (faster)
+        gradient_as_bucket_view=True  # Memory optimization for gradient synchronization
+    )
+    
     trainer = Trainer(max_epochs=10000,
-                      check_val_every_n_epoch=10,  # Validate every 10 epochs to reduce overhead.
+                      check_val_every_n_epoch=5,  # Validate every 10 epochs to reduce overhead.
                       logger=wandb_logger,
+                      num_nodes=1,
+                      sync_batchnorm=True,# Single node with 4 GPUs
                       callbacks=[checkpointer, early_stopping],
-                      precision='16-mixed',
+                      precision='bf16-mixed',
                       num_sanity_val_steps=1,  # Run 2 sanity validation steps to verify setup
-                      limit_val_batches=0.2  # Use 20% of validation set for quicker validation passes
-                      )  # Validate on 10% of validation set
+                      limit_val_batches=1.0,
+                      devices=2,  # Use all 8 GPUs
+                      accelerator="gpu",
+                      gradient_clip_val=1.0,
+                      strategy=strategy,
+                      gradient_clip_algorithm='norm'
+                       # Auto-detect: DDP for multi-GPU, single device otherwise
+                      )  
 
-    trainer.fit(model_wrapper, datamodule=datamodule)  # Start the training loop against the datamodule.
+    trainer.fit(model_wrapper, datamodule=datamodule, ckpt_path="weights/GrandStaff/FP-Grandstaff-system-level-v1.ckpt")  # Start the training loop against the datamodule. , ckpt_path="weights/GrandStaff/FP-Grandstaff-system-level.ckpt"
 
     model = SMT_Trainer.load_from_checkpoint(checkpointer.best_model_path)  # Reload the best checkpoint for testing.
 
